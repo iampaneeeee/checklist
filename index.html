@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>SANKHAPANI</title>
+<title>SANKHAPANI — Realtime Cloud Dashboard</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -33,7 +34,6 @@
 }}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
-/* topbar */
 .topbar{background:var(--surface);border-bottom:0.5px solid var(--border2);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;gap:12px;flex-wrap:wrap}
 .tl{display:flex;align-items:center;gap:10px;flex-shrink:0}
 .tlogo{width:32px;height:32px;background:var(--blue-bg);border-radius:var(--r);display:flex;align-items:center;justify-content:center;color:var(--blue);font-size:18px}
@@ -49,7 +49,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn-upload:hover{background:var(--teal-bg)}
 input[type="file"]#excel-upload{display:none}
 
-/* overlay & modals */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:flex-start;justify-content:center;padding:60px 16px}
 .overlay.open{display:flex}
 .modal{background:var(--surface);border-radius:var(--rl);border:0.5px solid var(--border2);padding:24px;width:100%;max-width:560px;max-height:88vh;overflow-y:auto}
@@ -62,12 +61,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);bo
 .ferr{font-size:12px;color:var(--red);margin-top:6px;display:none}
 .form-actions{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
 
-/* main Layout structural spaces */
 .main{max-width:1200px;margin:0 auto;padding:20px 18px}
 .sec-label{font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .divider{height:0.5px;background:var(--border2);margin:24px 0}
 
-/* metric cards */
 .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .mc{background:var(--surface);border:0.5px solid var(--border2);border-radius:var(--rl);padding:16px 18px;cursor:pointer;transition:border-color .15s,box-shadow .15s;position:relative}
 .mc:hover{border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.08)}
@@ -85,7 +82,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);bo
 .mc.no-pointer{cursor:default}
 .mc.no-pointer:hover{border-color:var(--border2);box-shadow:none}
 
-/* checklist structures */
 .cl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:12px}
 .cl-card{background:var(--surface);border:0.5px solid var(--border2);border-radius:var(--rl);padding:14px 16px;cursor:pointer;transition:border-color .15s;position:relative}
 .cl-card:hover,.cl-card.open{border-color:var(--blue)}
@@ -100,8 +96,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);bo
 .cl-sub{font-size:11px;color:var(--text3)}
 .cl-hover-acts{position:absolute;top:10px;right:10px;display:none;gap:3px}
 .cl-card:hover .cl-hover-acts{display:flex}
+.icon-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:3px}
+.icon-btn:hover{color:var(--text)}
+.icon-btn.del:hover{color:var(--red)}
 
-/* checklist detail panel */
 .cl-panel{background:var(--surface);border:0.5px solid var(--border2);border-radius:var(--rl);padding:20px;margin-top:4px}
 .cl-panel-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .cl-panel-title{font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px}
@@ -126,7 +124,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);bo
 .add-step-row{display:flex;gap:8px;margin-top:14px}
 .add-step-row input{flex:1}
 
-/* time filter row with calendar range elements */
 .time-filter-container{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px;background:var(--surface);padding:10px 16px;border-radius:var(--rl);border:0.5px solid var(--border2);flex-wrap:wrap}
 .time-pills{display:flex;gap:6px;flex-wrap:wrap}
 .pill{padding:5px 14px;border-radius:20px;border:0.5px solid var(--border2);font-size:12px;cursor:pointer;background:transparent;color:var(--text2);font-family:inherit;transition:all .12s}
@@ -135,7 +132,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);bo
 .custom-range-box{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)}
 .custom-range-box input[type="date"]{width:auto;padding:4px 8px;font-size:12px;border-radius:6px;border:0.5px solid var(--border2)}
 
-/* ticket table matrix layouts */
 .card{background:var(--surface);border:0.5px solid var(--border2);border-radius:var(--rl);overflow:hidden}
 .card-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:0.5px solid var(--border2);flex-wrap:wrap;gap:8px}
 .card-title{font-size:13px;font-weight:500;display:flex;align-items:center;gap:7px}
@@ -172,8 +168,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);bo
   <div class="tl">
     <div class="tlogo"><i class="ti ti-layout-dashboard"></i></div>
     <div>
-      <div class="ttitle">My Dashboard</div>
-      <div class="tsub"><span class="live-dot"></span><span>Local Mode (Offline Storage)</span></div>
+      <div class="ttitle">Team Dashboard</div>
+      <div class="tsub"><span class="live-dot"></span><span>Cloud Synchronized Mode</span></div>
     </div>
   </div>
   <div class="tactions">
@@ -280,9 +276,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);bo
     <div class="modal-hd"><span id="cl-modal-title">New checklist</span><button class="close-btn" onclick="closeCLModal()"><i class="ti ti-x"></i></button></div>
     <div class="fr" style="margin-bottom:12px">
       <label>Checklist name *</label>
-      <input type="text" id="cl-name-inp" placeholder="e.g. Sprint backend deployment checklist"/>
+      <input type="text" id="cl-name-inp" placeholder="e.g. Deployment verification"/>
     </div>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Steps — add each task manually</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Steps</div>
     <div class="step-editor" id="step-editor"></div>
     <button class="btn" style="margin-top:4px" onclick="addStepField('')"><i class="ti ti-plus"></i> Add step</button>
     <div class="ferr" id="cl-err"></div>
@@ -306,8 +302,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);bo
           <option value="Resolved">Resolved</option>
         </select>
       </div>
-      <div class="fr span2"><label>Subject *</label><input type="text" id="f-title" placeholder="Short description of the request"/></div>
-      <div class="fr span2"><label>Requester Name *</label><input type="text" id="f-requester" placeholder="Full name of requester"/></div>
+      <div class="fr span2"><label>Subject *</label><input type="text" id="f-title" placeholder="Short description"/></div>
+      <div class="fr span2"><label>Requester Name *</label><input type="text" id="f-requester" placeholder="Full name"/></div>
       <div class="fr span2"><label>Created Date</label><input type="date" id="f-date"/></div>
     </div>
     <div class="ferr" id="t-err"></div>
@@ -321,45 +317,59 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);bo
 <div class="toast" id="toast"></div>
 
 <script>
+// ==========================================
+// ⚠️ STEP 2: FILL IN YOUR API KEYS BELOW
+// ==========================================
+const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co'; 
+const SUPABASE_KEY = 'sb_publishable_2g9FideU7Sp0hXjut8MK1g_rNXQhEyH';
+
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 let checklists = [];
 let tickets = [];
 let activeCL = null;
 let editCLId = null;
 let editTicketId = null;
-let timeFilter = 'all'; // can be: 'all', 'day', 'week', 'month', 'year', or 'custom'
+let timeFilter = 'all'; 
 let statusFilter = 'all';
-
-const LOCAL_CL_KEY = 'offline_checklists_v1';
-const LOCAL_T_KEY = 'offline_tickets_v1';
 
 function toast(msg, dur=2200) {
   const el = document.getElementById('toast');
+  if(!el) return;
   el.textContent = msg; el.classList.add('show');
   setTimeout(()=>el.classList.remove('show'), dur);
 }
 
-/* Load and Seed Default Mock Data if Storage is empty */
-function initStorage() {
-  if(!localStorage.getItem(LOCAL_CL_KEY)) {
-    const seedCL = [
-      { id: "cl-seed-1", name: "Production Deployment Verification", order: 1, steps: [{name:"Verify AWS Route53 records",done:true},{name:"Flush Redis cluster cache layers",done:false},{name:"Confirm Webhook endpoint handshakes",done:false}] },
-      { id: "cl-seed-2", name: "UI Design Quality Audit", order: 2, steps: [{name:"Audit typography style variables",done:true},{name:"Compress raster media to WebP format",done:true}] }
-    ];
-    localStorage.setItem(LOCAL_CL_KEY, JSON.stringify(seedCL));
+// Fetch live database updates
+async function loadCloudData() {
+  try {
+    const { data: tkData, error: tkErr } = await supabase.from('tickets').select('*');
+    const { data: clData, error: clErr } = await supabase.from('checklists').select('*');
+    
+    if(tkErr) console.error("Ticket Fetch Error:", tkErr);
+    if(clErr) console.error("Checklist Fetch Error:", clErr);
+
+    if (tkData) {
+      tickets = tkData.map(t => ({
+        id: t.id,
+        reqId: t.req_id,
+        title: t.title,
+        requester: t.requester,
+        status: t.status,
+        isoDate: t.iso_date
+      }));
+    }
+    if (clData) {
+      checklists = clData;
+    }
+
+    syncDataState();
+  } catch (err) {
+    console.error("Cloud synchronization mapping error:", err);
   }
-  if(!localStorage.getItem(LOCAL_T_KEY)) {
-    const seedT = [
-      { id: "t-seed-1", reqId: "REQ-001", title: "API Gateway reporting 504 Gateway Timeout errors", requester: "Sarah Jenkins", status: "Pending", isoDate: new Date().toISOString().split('T')[0] },
-      { id: "t-seed-2", reqId: "REQ-002", title: "Corporate localization layout assets broken links", requester: "James Miller", status: "Resolved", isoDate: new Date().toISOString().split('T')[0] }
-    ];
-    localStorage.setItem(LOCAL_T_KEY, JSON.stringify(seedT));
-  }
-  syncDataState();
 }
 
 function syncDataState() {
-  checklists = JSON.parse(localStorage.getItem(LOCAL_CL_KEY) || '[]');
-  tickets = JSON.parse(localStorage.getItem(LOCAL_T_KEY) || '[]');
   checklists.sort((a,b)=>(a.order||0)-(b.order||0));
   tickets.sort((a,b)=>new Date(b.isoDate)-new Date(a.isoDate));
   
@@ -383,7 +393,6 @@ function updateMetrics() {
   document.getElementById('m-review').textContent = filtered.filter(t=>t.status==='In review').length;
 }
 
-/* Data Calculations Utilities */
 function pct(cl) { return cl.steps&&cl.steps.length?Math.round(cl.steps.filter(s=>s.done).length/cl.steps.length*100):0; }
 function today() { const d=new Date(); return new Date(d.getFullYear(),d.getMonth(),d.getDate()); }
 
@@ -392,12 +401,10 @@ function inRange(iso) {
   if (timeFilter==='all') return true;
   
   if (timeFilter==='custom') {
-    const dStr = iso; // e.g. "2026-06-02"
-    const fromVal = document.getElementById('date-from').value; // "" or "YYYY-MM-DD"
+    const fromVal = document.getElementById('date-from').value;
     const toVal = document.getElementById('date-to').value;
-    
-    if (fromVal && dStr < fromVal) return false;
-    if (toVal && dStr > toVal) return false;
+    if (fromVal && iso < fromVal) return false;
+    if (toVal && iso > toVal) return false;
     return true;
   }
   
@@ -416,7 +423,6 @@ function statusBadge(s){
   return `<span class="badge ba">${s}</span>`;
 }
 
-/* Checklist Layout Controllers */
 window.renderCL = function() {
   const grid=document.getElementById('cl-grid');
   if(!checklists.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text3);font-size:13px">No checklists yet — click "Add checklist"</div>';document.getElementById('cl-panel-wrap').innerHTML='';return;}
@@ -469,7 +475,7 @@ window.renderPanel = function() {
     <div class="bar-bg" style="height:8px;margin-bottom:18px"><div class="bar-fill ${p===100?'done':''}" style="width:${p}%;height:8px"></div></div>
     <div class="step-list">${rows}</div>
     <div class="add-step-row">
-       <input type="text" placeholder="Type a task objective title and press Enter..." id="fast-step-input"/>
+       <input type="text" placeholder="Type a task title and press Enter..." id="fast-step-input"/>
        <button class="btn btn-primary" onclick="addFastStep('${cl.id}')">Add task</button>
     </div>
   </div>`;
@@ -479,28 +485,30 @@ window.renderPanel = function() {
   });
 }
 
-window.toggleStep = function(clId, index) {
+window.toggleStep = async function(clId, index) {
   const cl = checklists.find(c=>c.id===clId); if(!cl) return;
   cl.steps[index].done = !cl.steps[index].done;
-  localStorage.setItem(LOCAL_CL_KEY, JSON.stringify(checklists)); syncDataState();
+  await supabase.from('checklists').upsert([cl]);
+  loadCloudData();
 }
 
-window.deleteStep = function(clId, index) {
+window.deleteStep = async function(clId, index) {
   const cl = checklists.find(c=>c.id===clId); if(!cl) return;
   cl.steps.splice(index, 1);
-  localStorage.setItem(LOCAL_CL_KEY, JSON.stringify(checklists)); syncDataState();
+  await supabase.from('checklists').upsert([cl]);
+  loadCloudData();
 }
 
-window.addFastStep = function(clId) {
+window.addFastStep = async function(clId) {
   const inp = document.getElementById('fast-step-input'); if(!inp) return;
   const val = inp.value.trim(); if(!val) return;
   const cl = checklists.find(c=>c.id===clId); if(!cl) return;
   if(!cl.steps) cl.steps = [];
   cl.steps.push({ name: val, done: false });
-  localStorage.setItem(LOCAL_CL_KEY, JSON.stringify(checklists)); syncDataState();
+  await supabase.from('checklists').upsert([cl]);
+  loadCloudData();
 }
 
-/* Checklist Modals Modulators */
 window.openAddCL = function() {
   editCLId = null;
   document.getElementById('cl-modal-title').textContent = 'New checklist';
@@ -515,7 +523,7 @@ window.addStepField = function(val='') {
   const container = document.getElementById('step-editor');
   const d = document.createElement('div');
   d.className = 'se-row';
-  d.innerHTML = `<input type="text" value="${val.replace(/"/g, '&quot;')}" placeholder="Task step description..."/>
+  d.innerHTML = `<input type="text" value="${val.replace(/"/g, '&quot;')}" placeholder="Task step..."/>
                  <button class="icon-btn del" onclick="this.parentElement.remove()"><i class="ti ti-trash"></i></button>`;
   container.appendChild(d);
 }
@@ -538,9 +546,9 @@ window.editCL = function(id) {
 
 window.closeCLModal = function() { document.getElementById('cl-modal').classList.remove('open'); }
 
-window.saveCL = function() {
+window.saveCL = async function() {
   const name = document.getElementById('cl-name-inp').value.trim();
-  if(!name) { displayCLErr('Checklist title name is required.'); return; }
+  if(!name) { displayCLErr('Checklist name is required.'); return; }
   
   const stepInputs = document.querySelectorAll('#step-editor .se-row input');
   const steps = [];
@@ -560,36 +568,28 @@ window.saveCL = function() {
   }
 
   const payload = {
+    id: editCLId || 'cl-' + Date.now(),
     name: name,
     steps: steps,
     order: editCLId ? (checklists.find(c=>c.id===editCLId)?.order || Date.now()) : Date.now()
   };
 
-  if(editCLId) {
-    const idx = checklists.findIndex(c=>c.id===editCLId);
-    if(idx!==-1) checklists[idx] = { id: editCLId, ...payload };
-  } else {
-    checklists.push({ id: 'cl-' + Date.now(), ...payload });
-  }
-  
-  localStorage.setItem(LOCAL_CL_KEY, JSON.stringify(checklists));
-  syncDataState();
+  await supabase.from('checklists').upsert([payload]);
+  loadCloudData();
   closeCLModal();
   toast('Checklist configurations saved updates.');
 }
 
 function displayCLErr(m) { const e=document.getElementById('cl-err'); e.textContent=m; e.style.display='block'; }
 
-window.deleteCL = function(id) {
-  if(!confirm('Permanently wipe out this tracking checklist?')) return;
+window.deleteCL = async function(id) {
+  if(!confirm('Permanently delete this tracking checklist?')) return;
   if(activeCL === id) activeCL = null;
-  checklists = checklists.filter(c=>c.id!==id);
-  localStorage.setItem(LOCAL_CL_KEY, JSON.stringify(checklists));
-  syncDataState();
+  await supabase.from('checklists').delete().eq('id', id);
+  loadCloudData();
   toast('Checklist deleted.');
 }
 
-/* Ticket Processing Filters */
 window.setStatusFilter = function(status) {
   statusFilter = status;
   const mcs = ['all', 'Resolved', 'Pending', 'Pending user approval', 'In review'];
@@ -606,15 +606,11 @@ window.setStatusFilter = function(status) {
 
 window.setTime = function(range, element) {
   timeFilter = range;
-  
-  // Clear manual custom values when preset ranges are called
   document.getElementById('date-from').value = "";
   document.getElementById('date-to').value = "";
-
   const pills = document.querySelectorAll('.time-pills .pill');
   pills.forEach(p => p.classList.remove('active'));
   element.classList.add('active');
-  
   renderTicketTable();
   updateMetrics();
 }
@@ -622,18 +618,13 @@ window.setTime = function(range, element) {
 window.onCustomDateChange = function() {
   const fromVal = document.getElementById('date-from').value;
   const toVal = document.getElementById('date-to').value;
-  
   if (fromVal || toVal) {
     timeFilter = 'custom';
-    // Remove active style flag from preset pill elements
-    const pills = document.querySelectorAll('.time-pills .pill');
-    pills.forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.time-pills .pill').forEach(p => p.classList.remove('active'));
   } else {
-    // Revert to all time if values are cleared manually
     timeFilter = 'all';
     document.getElementById('pill-all').classList.add('active');
   }
-  
   renderTicketTable();
   updateMetrics();
 }
@@ -658,7 +649,7 @@ window.renderTicketTable = function() {
   document.getElementById('cnt-badge').textContent = `${filtered.length} tickets`;
 
   if(!filtered.length) {
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">No match tickets detected matching filters criteria.</td></tr>`;
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">No tickets match criteria.</td></tr>`;
     return;
   }
 
@@ -676,12 +667,10 @@ window.renderTicketTable = function() {
   }).join('');
 }
 
-/* Ticket Manipulation Engine Models */
 window.openAddTicket = function() {
   editTicketId = null;
   document.getElementById('t-modal-title').textContent = 'Add ticket';
   
-  /* Safe Sequential Auto-Increment Logic Checks */
   let maxNum = 0;
   tickets.forEach(t => {
     if(t.reqId && t.reqId.startsWith('REQ-')) {
@@ -715,7 +704,7 @@ window.editTicket = function(id) {
 
 window.closeTicketModal = function() { document.getElementById('t-modal').classList.remove('open'); }
 
-window.saveTicket = function() {
+window.saveTicket = async function() {
   const rid = document.getElementById('f-id').value.trim();
   const title = document.getElementById('f-title').value.trim();
   const req = document.getElementById('f-requester').value.trim();
@@ -725,38 +714,36 @@ window.saveTicket = function() {
   if(!rid || !title || !req) { displayTErr('Complete required operational fields (*).'); return; }
   if(!sDate) sDate = new Date().toISOString().split('T')[0];
 
-  const payload = { reqId: rid, title: title, requester: req, status: status, isoDate: sDate };
+  const payload = { 
+    id: editTicketId || 't-' + Date.now(),
+    req_id: rid, 
+    title: title, 
+    requester: req, 
+    status: status, 
+    iso_date: sDate 
+  };
 
-  if(editTicketId) {
-    const idx = tickets.findIndex(t=>t.id===editTicketId);
-    if(idx!==-1) tickets[idx] = { id: editTicketId, ...payload };
-  } else {
-    tickets.push({ id: 't-' + Date.now(), ...payload });
-  }
-  
-  localStorage.setItem(LOCAL_T_KEY, JSON.stringify(tickets));
-  syncDataState();
+  await supabase.from('tickets').upsert([payload]);
+  loadCloudData();
   closeTicketModal();
   toast('Ticket structural log entry updated.');
 }
 
 function displayTErr(m) { const e=document.getElementById('t-err'); e.textContent=m; e.style.display='block'; }
 
-window.deleteTicket = function(id) {
-  if(!confirm('Expunge historical ticket configuration node logs completely?')) return;
-  tickets = tickets.filter(t=>t.id!==id);
-  localStorage.setItem(LOCAL_T_KEY, JSON.stringify(tickets));
-  syncDataState();
+window.deleteTicket = async function(id) {
+  if(!confirm('Delete this ticket live?')) return;
+  await supabase.from('tickets').delete().eq('id', id);
+  loadCloudData();
   toast('Ticket trace record deleted.');
 }
 
-/* Dynamic Local File Excel Sheet Parsing Controller */
 window.importExcel = function(event) {
   const file = event.target.files[0];
   if(!file) return;
   
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = async function(e) {
     try {
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, { type: 'array' });
@@ -764,7 +751,9 @@ window.importExcel = function(event) {
       const worksheet = workbook.Sheets[firstSheetName];
       const json = XLSX.utils.sheet_to_json(worksheet);
 
+      let importedRows = [];
       let importedCount = 0;
+
       json.forEach(row => {
         let subject = null, requester = "Imported Operator", rawStatus = "", reqId = null, dateVal = null;
         
@@ -784,15 +773,9 @@ window.importExcel = function(event) {
 
         let status = "Pending"; 
         const normStatus = rawStatus.toLowerCase();
-        if (normStatus.includes("resolve") || normStatus.includes("close") || normStatus.includes("done")) {
-          status = "Resolved";
-        } else if (normStatus.includes("review")) {
-          status = "In review";
-        } else if (normStatus.includes("approval") || normStatus.includes("approve")) {
-          status = "Pending user approval";
-        } else if (normStatus.includes("pending") || normStatus.includes("open") || normStatus.includes("progress")) {
-          status = "Pending";
-        }
+        if (normStatus.includes("resolve") || normStatus.includes("close") || normStatus.includes("done")) status = "Resolved";
+        else if (normStatus.includes("review")) status = "In review";
+        else if (normStatus.includes("approval") || normStatus.includes("approve")) status = "Pending user approval";
 
         if(!reqId) {
           let currentMax = 0;
@@ -816,16 +799,18 @@ window.importExcel = function(event) {
           }
         }
 
-        tickets.push({
+        importedRows.push({
           id: 't-import-' + Date.now() + '-' + importedCount,
-          reqId, title: subject, requester, status, isoDate
+          req_id: reqId, title: subject, requester, status, iso_date: isoDate
         });
         importedCount++;
       });
 
-      localStorage.setItem(LOCAL_T_KEY, JSON.stringify(tickets));
-      syncDataState();
-      toast(`Successfully synchronized ${importedCount} spreadsheet rows locally.`);
+      if(importedRows.length > 0) {
+        await supabase.from('tickets').upsert(importedRows);
+      }
+      loadCloudData();
+      toast(`Successfully synchronized ${importedCount} rows to the cloud database.`);
     } catch(err) {
       toast('Spreadsheet compilation error: ' + err.message, 4000);
     }
@@ -834,8 +819,15 @@ window.importExcel = function(event) {
   reader.readAsArrayBuffer(file);
 }
 
-// Initial storage loop kickoff
-initStorage();
+// Real-time listener configuration loop
+supabase.channel('custom-all-channel')
+  .on('postgres_changes', { event: '*', filter: '*', schema: 'public' }, () => {
+     loadCloudData();
+  })
+  .subscribe();
+
+// Initial database pull execution
+loadCloudData();
 </script>
 </body>
 </html>
