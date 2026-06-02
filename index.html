@@ -322,7 +322,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);bo
 const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co'; 
 const SUPABASE_KEY = 'sb_publishable_2g9FideU7Sp0hXjut8MK1g_rNXQhEyH';
 
-// Initialize the client connection instance using a unique variable name to prevent CDN collision
+// Core client setup configured securely using non-colliding layout naming parameters
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let checklists = [];
@@ -764,7 +764,7 @@ window.importExcel = function(event) {
           
           if (/^(subject|title|description|issue|problem description)$/.test(cleanKey)) subject = val;
           if (/^(requester|name|user|created by|client)$/.test(cleanKey)) requester = val;
-          if (/^(status|state|ticket status)$/.test(cleanStatus)) rawStatus = val;
+          if (/^(status|state|ticket status)$/.test(cleanKey)) rawStatus = val;
           if (/^(request id|requestid|id|ticket id)$/.test(cleanKey)) reqId = val;
           if (/^(created date|date|timestamp)$/.test(cleanKey)) dateVal = row[key];
         }
