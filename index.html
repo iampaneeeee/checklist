@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Team Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f5f3;--surface:#fff;--surface2:#f1efe8;--surface3:#e8e6de;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
+  --text:#1a1a19;--text2:#5f5e5a;--text3:#888780;
+  --green-bg:#eaf3de;--green-t:#27500a;--green:#3b6d11;
+  --amber-bg:#faeeda;--amber-t:#633806;--amber:#854f0b;
+  --blue-bg:#e6f1fb;--blue-t:#0c447c;--blue:#185fa5;
+  --red-bg:#fcebeb;--red-t:#791f1f;--red:#a32d2d;
+  --purple-bg:#eeedfe;--purple-t:#3c3489;--purple:#534ab7;
+  --teal-bg:#e1f5ee;--teal-t:#085041;--teal:#0f6e56;
+  --r:8px;--rl:12px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#181817;--surface:#222220;--surface2:#2a2a28;--surface3:#323230;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.15);
+  --text:#f1efe8;--text2:#b4b2a9;--text3:#6e6d69;
+  --green-bg:#173404;--green-t:#c0dd97;--green:#639922;
+  --amber-bg:#412402;--amber-t:#fac775;--amber:#ef9f27;
+  --blue-bg:#042c53;--blue-t:#b5d4f4;--blue:#378add;
+  --red-bg:#501313;--red-t:#f7c1c1;--red:#e24b4a;
+  --purple-bg:#26215c;--purple-t:#cecbf6;--purple:#7f77dd;
+  --teal-bg:#04342c;--teal-t:#9fe1cb;--teal:#1d9e75;
+}}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* topbar */
+.topbar{background:var(--surface);border-bottom:0.5px solid var(--border2);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;gap:12px;flex-wrap:wrap}
+.tl{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.tlogo{width:32px;height:32px;background:var(--blue-bg);border-radius:var(--r);display:flex;align-items:center;justify-content:center;color:var(--blue);font-size:18px}
+.ttitle{font-size:15px;font-weight:500}
+.tsub{font-size:11px;color:var(--text3);margin-top:1px;display:flex;align-items:center;gap:5px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);display:inline-block;transition:background .3s}
+.live-dot.connected{background:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,.25);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 2px rgba(34,197,94,.25)}50%{box-shadow:0 0 0 5px rgba(34,197,94,.08)}}
+.tactions{display:flex;gap:7px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:var(--r);border:0.5px solid var(--border2);background:transparent;color:var(--text);font-size:12px;cursor:pointer;transition:background .12s;font-family:inherit;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn-primary{background:var(--text);color:var(--bg);border-color:var(--text)}
+.btn-primary:hover{opacity:.85;background:var(--text)}
+.btn-warn{border-color:var(--amber);color:var(--amber)}
+.btn-warn:hover{background:var(--amber-bg)}
+
+/* setup banner */
+.setup-banner{background:var(--amber-bg);border:0.5px solid var(--amber);border-radius:var(--rl);padding:16px 20px;margin:20px 18px;display:flex;align-items:flex-start;gap:12px}
+.setup-banner i{color:var(--amber);font-size:20px;flex-shrink:0;margin-top:1px}
+.setup-banner h3{font-size:13px;font-weight:500;margin-bottom:4px}
+.setup-banner p{font-size:12px;color:var(--text2);line-height:1.6}
+.setup-banner a{color:var(--blue);text-decoration:underline}
+.setup-banner code{background:var(--surface3);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px}
+
+/* setup modal */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:flex-start;justify-content:center;padding:60px 16px}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--rl);border:0.5px solid var(--border2);padding:24px;width:100%;max-width:560px;max-height:88vh;overflow-y:auto}
+.modal-hd{font-size:15px;font-weight:500;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.close-btn{background:none;border:none;cursor:pointer;color:var(--text2);font-size:20px;display:flex;align-items:center}
+.step-guide{counter-reset:guide;list-style:none;margin:14px 0}
+.step-guide li{counter-increment:guide;display:flex;gap:10px;margin-bottom:12px;font-size:13px;line-height:1.6}
+.step-guide li::before{content:counter(guide);width:22px;height:22px;background:var(--blue-bg);color:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;margin-top:1px}
+.step-guide a{color:var(--blue)}
+.step-guide code{background:var(--surface2);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px}
+.cfg-inputs{display:flex;flex-direction:column;gap:10px;margin:16px 0}
+.fr{display:flex;flex-direction:column;gap:4px}
+.fr label{font-size:11px;color:var(--text3)}
+input,select,textarea{width:100%;padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);font-size:13px;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px rgba(24,95,165,.13)}
+.ferr{font-size:12px;color:var(--red);margin-top:6px;display:none}
+.form-actions{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
+
+/* main */
+.main{max-width:1200px;margin:0 auto;padding:20px 18px}
+.sec-label{font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.divider{height:0.5px;background:var(--border2);margin:24px 0}
+
+/* metric cards */
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.mc{background:var(--surface);border:0.5px solid var(--border2);border-radius:var(--rl);padding:16px 18px;cursor:pointer;transition:border-color .15s,box-shadow .15s;position:relative}
+.mc:hover{border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.08)}
+.mc.active-filter{border-color:var(--blue);border-width:1.5px;box-shadow:0 0 0 3px rgba(24,95,165,.1)}
+.mc-icon{width:32px;height:32px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:10px}
+.mc-val{font-size:30px;font-weight:500;line-height:1;margin-bottom:4px}
+.mc-label{font-size:12px;color:var(--text2)}
+.mc-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.mc.blue .mc-icon{background:var(--blue-bg);color:var(--blue)}.mc.blue .mc-val{color:var(--blue)}
+.mc.green .mc-icon{background:var(--green-bg);color:var(--green)}.mc.green .mc-val{color:var(--green)}
+.mc.amber .mc-icon{background:var(--amber-bg);color:var(--amber)}.mc.amber .mc-val{color:var(--amber)}
+.mc.red .mc-icon{background:var(--red-bg);color:var(--red)}.mc.red .mc-val{color:var(--red)}
+.mc.purple .mc-icon{background:var(--purple-bg);color:var(--purple)}.mc.purple .mc-val{color:var(--purple)}
+.mc.teal .mc-icon{background:var(--teal-bg);color:var(--teal)}.mc.teal .mc-val{color:var(--teal)}
+.mc.no-pointer{cursor:default}
+.mc.no-pointer:hover{border-color:var(--border2);box-shadow:none}
+
+/* checklist */
+.cl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:12px}
+.cl-card{background:var(--surface);border:0.5px solid var(--border2);border-radius:var(--rl);padding:14px 16px;cursor:pointer;transition:border-color .15s;position:relative}
+.cl-card:hover,.cl-card.open{border-color:var(--blue)}
+.cl-card.open{border-width:1.5px}
+.cl-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px}
+.cl-name{font-size:13px;font-weight:500;flex:1}
+.cl-pct{font-size:16px;font-weight:500;color:var(--blue);white-space:nowrap}
+.cl-pct.done{color:var(--green)}
+.bar-bg{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.bar-fill{height:5px;border-radius:3px;background:var(--blue);transition:width .4s}
+.bar-fill.done{background:var(--green)}
+.cl-sub{font-size:11px;color:var(--text3)}
+.cl-hover-acts{position:absolute;top:10px;right:10px;display:none;gap:3px}
+.cl-card:hover .cl-hover-acts{display:flex}
+.icon-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px;padding:2px;display:flex;align-items:center;border-radius:4px}
+.icon-btn:hover{color:var(--text);background:var(--surface2)}
+.icon-btn.del:hover{color:var(--red)}
+
+/* checklist detail panel */
+.cl-panel{background:var(--surface);border:0.5px solid var(--border2);border-radius:var(--rl);padding:20px;margin-top:4px}
+.cl-panel-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.cl-panel-title{font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px}
+.big-pct{font-size:28px;font-weight:500;color:var(--blue)}
+.big-pct.done{color:var(--green)}
+.step-list{display:flex;flex-direction:column}
+.step-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--border)}
+.step-row:last-child{border-bottom:none}
+.step-num{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text3);flex-shrink:0;cursor:pointer;transition:all .15s}
+.step-num.checked{background:var(--green);border-color:var(--green);color:#fff}
+.step-num:hover:not(.checked){border-color:var(--blue);color:var(--blue)}
+.step-info{flex:1;min-width:0}
+.step-name-txt{font-size:13px;color:var(--text)}
+.step-name-txt.done{text-decoration:line-through;color:var(--text3)}
+.step-contrib{font-size:11px;color:var(--text3);margin-top:2px}
+.step-pct-bar{width:80px;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;flex-shrink:0}
+.step-pct-fill{height:4px;border-radius:2px;background:var(--green)}
+.step-pct-val{font-size:12px;font-weight:500;width:36px;text-align:right;flex-shrink:0}
+.step-del-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;opacity:0;padding:2px;display:flex;align-items:center}
+.step-row:hover .step-del-btn{opacity:1}
+.step-del-btn:hover{color:var(--red)}
+.add-step-row{display:flex;gap:8px;margin-top:14px}
+.add-step-row input{flex:1}
+
+/* time pills */
+.time-pills{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.pill{padding:5px 14px;border-radius:20px;border:0.5px solid var(--border2);font-size:12px;cursor:pointer;background:transparent;color:var(--text2);font-family:inherit;transition:all .12s}
+.pill:hover{background:var(--surface2)}
+.pill.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* ticket table */
+.card{background:var(--surface);border:0.5px solid var(--border2);border-radius:var(--rl);overflow:hidden}
+.card-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:0.5px solid var(--border2);flex-wrap:wrap;gap:8px}
+.card-title{font-size:13px;font-weight:500;display:flex;align-items:center;gap:7px}
+.filter-row{display:flex;gap:8px;padding:10px 18px;border-bottom:0.5px solid var(--border);flex-wrap:wrap}
+.filter-row input{flex:1;min-width:120px;font-size:12px;padding:6px 9px}
+.filter-row select{font-size:12px;padding:6px 9px;width:auto}
+.t-table{width:100%;border-collapse:collapse}
+.t-table th{font-size:11px;color:var(--text3);font-weight:500;padding:8px 16px;text-align:left;border-bottom:0.5px solid var(--border2);background:var(--surface2);white-space:nowrap}
+.t-table td{padding:11px 16px;border-bottom:0.5px solid var(--border);font-size:13px;vertical-align:middle}
+.t-table tr:last-child td{border-bottom:none}
+.t-table tbody tr{cursor:pointer;transition:background .1s}
+.t-table tbody tr:hover{background:var(--surface2)}
+.badge{font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.bg{background:var(--green-bg);color:var(--green-t)}
+.ba{background:var(--amber-bg);color:var(--amber-t)}
+.bb{background:var(--blue-bg);color:var(--blue-t)}
+.br{background:var(--red-bg);color:var(--red-t)}
+.bp{background:var(--purple-bg);color:var(--purple-t)}
+.pdot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle}
+.empty-row td{text-align:center;padding:32px;color:var(--text3);font-size:13px}
+.t-act-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:2px;display:inline-flex;align-items:center}
+.t-act-btn:hover{color:var(--text)}
+.t-act-btn.del:hover{color:var(--red)}
+
+/* CL / ticket modals */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.span2{grid-column:span 2}
+.step-editor{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.se-row{display:flex;gap:6px;align-items:center}
+.se-row input{flex:1}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:var(--r);font-size:13px;z-index:999;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tl">
+    <div class="tlogo"><i class="ti ti-layout-dashboard"></i></div>
+    <div>
+      <div class="ttitle">Team Dashboard</div>
+      <div class="tsub"><span class="live-dot" id="live-dot"></span><span id="live-label">Connecting…</span></div>
+    </div>
+  </div>
+  <div class="tactions">
+    <button class="btn btn-warn" onclick="openSetup()" id="setup-btn"><i class="ti ti-settings"></i> Firebase setup</button>
+    <button class="btn" onclick="openAddCL()"><i class="ti ti-list-check"></i> Add checklist</button>
+    <button class="btn" onclick="openAddTicket()"><i class="ti ti-plus"></i> Add ticket</button>
+    <button class="btn btn-primary" onclick="copyLink()"><i class="ti ti-copy"></i> Copy link</button>
+  </div>
+</div>
+
+<!-- setup banner shown when not configured -->
+<div class="setup-banner" id="setup-banner" style="display:none">
+  <i class="ti ti-alert-circle"></i>
+  <div>
+    <h3>Firebase not configured — data won't sync in real-time</h3>
+    <p>To make this dashboard live for everyone, connect a free Firebase project. Click <strong>"Firebase setup"</strong> in the top bar and follow the 5-step guide — it takes about 3 minutes.</p>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ── CHECKLIST BLOCK ── -->
+  <div class="sec-label"><i class="ti ti-list-check"></i> Checklists</div>
+  <div class="metric-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));max-width:340px;margin-bottom:16px">
+    <div class="mc purple no-pointer">
+      <div class="mc-icon"><i class="ti ti-list-check"></i></div>
+      <div class="mc-val" id="cl-count">0</div>
+      <div class="mc-label">Active checklists</div>
+    </div>
+    <div class="mc teal no-pointer">
+      <div class="mc-icon"><i class="ti ti-check"></i></div>
+      <div class="mc-val" id="tasks-done">0</div>
+      <div class="mc-label">Tasks done</div>
+      <div class="mc-sub" id="tasks-sub">of 0 total</div>
+    </div>
+  </div>
+  <div class="cl-grid" id="cl-grid">
+    <div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text3);font-size:13px">
+      <span class="spinner"></span> Loading…
+    </div>
+  </div>
+  <div id="cl-panel-wrap"></div>
+
+  <div class="divider"></div>
+
+  <!-- ── TICKET BLOCK ── -->
+  <div class="sec-label"><i class="ti ti-ticket"></i> Tickets</div>
+  <div class="metric-grid" style="margin-bottom:18px">
+    <div class="mc blue" onclick="setStatusFilter('all')" id="mc-all">
+      <div class="mc-icon"><i class="ti ti-ticket"></i></div>
+      <div class="mc-val" id="m-total">0</div>
+      <div class="mc-label">Total tickets</div>
+    </div>
+    <div class="mc green" onclick="setStatusFilter('Resolved')" id="mc-resolved">
+      <div class="mc-icon"><i class="ti ti-circle-check"></i></div>
+      <div class="mc-val" id="m-resolved">0</div>
+      <div class="mc-label">Resolved</div>
+    </div>
+    <div class="mc amber" onclick="setStatusFilter('Pending')" id="mc-pending">
+      <div class="mc-icon"><i class="ti ti-clock"></i></div>
+      <div class="mc-val" id="m-pending">0</div>
+      <div class="mc-label">Pending</div>
+    </div>
+    <div class="mc red" onclick="setStatusFilter('Pending user approval')" id="mc-approval">
+      <div class="mc-icon"><i class="ti ti-user-check"></i></div>
+      <div class="mc-val" id="m-approval">0</div>
+      <div class="mc-label">Pending user approval</div>
+    </div>
+    <div class="mc purple" onclick="setStatusFilter('In review')" id="mc-review">
+      <div class="mc-icon"><i class="ti ti-eye"></i></div>
+      <div class="mc-val" id="m-review">0</div>
+      <div class="mc-label">In review</div>
+    </div>
+  </div>
+
+  <div class="time-pills">
+    <button class="pill active" onclick="setTime('all',this)">All time</button>
+    <button class="pill" onclick="setTime('day',this)">Today</button>
+    <button class="pill" onclick="setTime('week',this)">This week</button>
+    <button class="pill" onclick="setTime('month',this)">This month</button>
+    <button class="pill" onclick="setTime('year',this)">This year</button>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title" id="table-label"><i class="ti ti-table"></i> All tickets</div>
+      <span class="badge bb" id="cnt-badge">0 tickets</span>
+    </div>
+    <div class="filter-row">
+      <input type="text" placeholder="Search ID or title…" id="t-search" oninput="renderTicketTable()"/>
+      <select id="t-priority" onchange="renderTicketTable()">
+        <option value="">All priority</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select>
+      <select id="t-type" onchange="renderTicketTable()">
+        <option value="">All types</option>
+        <option value="Bug">Bug</option>
+        <option value="Feature">Feature</option>
+        <option value="Support">Support</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="t-table">
+        <thead><tr>
+          <th style="width:90px">ID</th>
+          <th>Title</th>
+          <th style="width:130px">Status</th>
+          <th style="width:90px">Priority</th>
+          <th style="width:85px">Type</th>
+          <th style="width:90px">Date</th>
+          <th style="width:60px"></th>
+        </tr></thead>
+        <tbody id="t-body"><tr class="empty-row"><td colspan="7"><span class="spinner"></span> Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── Firebase setup modal ── -->
+<div class="overlay" id="setup-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <span>🔥 Firebase real-time setup</span>
+      <button class="close-btn" onclick="closeSetup()"><i class="ti ti-x"></i></button>
+    </div>
+    <p style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:4px">Follow these steps once — takes ~3 minutes. Free tier is more than enough.</p>
+    <ol class="step-guide">
+      <li>Go to <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> → <strong>Add project</strong> → give it any name → disable Google Analytics → Create project.</li>
+      <li>Inside your project → <strong>Build → Firestore Database</strong> → Create database → choose <code>Start in test mode</code> → pick any region → Enable.</li>
+      <li>Go to <strong>Project settings</strong> (gear icon) → <strong>General</strong> tab → scroll to "Your apps" → click the <strong>&lt;/&gt; Web</strong> icon → register app with any nickname → copy the <code>firebaseConfig</code> object values below.</li>
+      <li>Paste each value into the fields below and click <strong>Save & connect</strong>.</li>
+      <li>Commit & push <code>index.html</code> to your GitHub repo — everyone who opens the page will now see live updates instantly.</li>
+    </ol>
+    <div class="cfg-inputs">
+      <div class="fr"><label>API Key</label><input id="cfg-apiKey" placeholder="AIzaSy…"/></div>
+      <div class="fr"><label>Auth Domain</label><input id="cfg-authDomain" placeholder="yourapp.firebaseapp.com"/></div>
+      <div class="fr"><label>Project ID</label><input id="cfg-projectId" placeholder="yourapp-12345"/></div>
+      <div class="fr"><label>Storage Bucket</label><input id="cfg-storageBucket" placeholder="yourapp.appspot.com"/></div>
+      <div class="fr"><label>Messaging Sender ID</label><input id="cfg-messagingSenderId" placeholder="123456789"/></div>
+      <div class="fr"><label>App ID</label><input id="cfg-appId" placeholder="1:123…"/></div>
+    </div>
+    <div class="ferr" id="cfg-err"></div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeSetup()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCfg()"><i class="ti ti-check"></i> Save &amp; connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Add/edit checklist modal ── -->
+<div class="overlay" id="cl-modal">
+  <div class="modal">
+    <div class="modal-hd"><span id="cl-modal-title">New checklist</span><button class="close-btn" onclick="closeCLModal()"><i class="ti ti-x"></i></button></div>
+    <div class="fr" style="margin-bottom:12px">
+      <label>Checklist name *</label>
+      <input type="text" id="cl-name-inp" placeholder="e.g. Sprint 14 backend tasks"/>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Steps — add each task manually</div>
+    <div class="step-editor" id="step-editor"></div>
+    <button class="btn" style="margin-top:4px" onclick="addStepField()"><i class="ti ti-plus"></i> Add step</button>
+    <div class="ferr" id="cl-err"></div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeCLModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCL()" id="cl-save-btn"><i class="ti ti-check"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Add/edit ticket modal ── -->
+<div class="overlay" id="t-modal">
+  <div class="modal">
+    <div class="modal-hd"><span id="t-modal-title">Add ticket</span><button class="close-btn" onclick="closeTicketModal()"><i class="ti ti-x"></i></button></div>
+    <div class="fg">
+      <div class="fr"><label>Ticket ID *</label><input type="text" id="f-id" placeholder="TKT-001"/></div>
+      <div class="fr"><label>Status *</label>
+        <select id="f-status">
+          <option value="Pending">Pending</option>
+          <option value="In review">In review</option>
+          <option value="Pending user approval">Pending user approval</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+      </div>
+      <div class="fr span2"><label>Title *</label><input type="text" id="f-title" placeholder="Short description"/></div>
+      <div class="fr span2"><label>Zoho ticket URL *</label><input type="url" id="f-url" placeholder="https://desk.zoho.com/agent/…"/></div>
+      <div class="fr"><label>Priority</label>
+        <select id="f-priority"><option value="Medium">Medium</option><option value="High">High</option><option value="Low">Low</option></select>
+      </div>
+      <div class="fr"><label>Type</label>
+        <select id="f-type"><option value="Bug">Bug</option><option value="Feature">Feature</option><option value="Support">Support</option><option value="Other">Other</option></select>
+      </div>
+      <div class="fr span2"><label>Assignee</label><input type="text" id="f-assignee" placeholder="Name or team"/></div>
+    </div>
+    <div class="ferr" id="t-err"></div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeTicketModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTicket()" id="t-save-btn"><i class="ti ti-check"></i> Save ticket</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDKs -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ── state ── */
+let db = null;
+let checklists = [];
+let tickets = [];
+let activeCL = null;
+let editCLId = null;
+let editTicketId = null;
+let timeFilter = 'all';
+let statusFilter = 'all';
+let unsubCL = null, unsubTickets = null;
+
+const CFG_KEY = 'firebase_cfg_v1';
+
+/* ── toast ── */
+function toast(msg, dur=2200) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), dur);
+}
+
+/* ── firebase init ── */
+function loadCfg() {
+  try { const r=localStorage.getItem(CFG_KEY); return r?JSON.parse(r):null; } catch(e){return null;}
+}
+function initFirebase(cfg) {
+  try {
+    const app = initializeApp(cfg);
+    db = getFirestore(app);
+    setLive(true);
+    document.getElementById('setup-banner').style.display='none';
+    document.getElementById('setup-btn').innerHTML='<i class="ti ti-settings"></i> Firebase';
+    subscribeAll();
+    return true;
+  } catch(e) {
+    setLive(false);
+    toast('Firebase error: '+e.message, 4000);
+    return false;
+  }
+}
+
+function setLive(on) {
+  const dot=document.getElementById('live-dot');
+  const lbl=document.getElementById('live-label');
+  dot.className='live-dot'+(on?' connected':'');
+  lbl.textContent=on?'Live — syncing in real-time':'Not connected';
+}
+
+/* ── subscriptions ── */
+function subscribeAll() {
+  if (unsubCL) unsubCL();
+  if (unsubTickets) unsubTickets();
+  unsubCL = onSnapshot(collection(db,'checklists'), snap => {
+    checklists = snap.docs.map(d=>({id:d.id,...d.data()}));
+    checklists.sort((a,b)=>(a.order||0)-(b.order||0));
+    renderCL(); updateMetrics();
+  });
+  unsubTickets = onSnapshot(collection(db,'tickets'), snap => {
+    tickets = snap.docs.map(d=>({id:d.id,...d.data()}));
+    tickets.sort((a,b)=>new Date(b.isoDate)-new Date(a.isoDate));
+    renderTicketTable(); updateMetrics();
+  });
+}
+
+/* ── setup modal ── */
+window.openSetup = function() {
+  const cfg = loadCfg();
+  if (cfg) {
+    document.getElementById('cfg-apiKey').value = cfg.apiKey||'';
+    document.getElementById('cfg-authDomain').value = cfg.authDomain||'';
+    document.getElementById('cfg-projectId').value = cfg.projectId||'';
+    document.getElementById('cfg-storageBucket').value = cfg.storageBucket||'';
+    document.getElementById('cfg-messagingSenderId').value = cfg.messagingSenderId||'';
+    document.getElementById('cfg-appId').value = cfg.appId||'';
+  }
+  document.getElementById('setup-modal').classList.add('open');
+}
+window.closeSetup = function() { document.getElementById('setup-modal').classList.remove('open'); }
+window.saveCfg = function() {
+  const keys=['apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId'];
+  const cfg={};
+  for(const k of keys){ cfg[k]=document.getElementById('cfg-'+k).value.trim(); }
+  if (!cfg.apiKey||!cfg.projectId) {
+    const e=document.getElementById('cfg-err'); e.textContent='API Key and Project ID are required.'; e.style.display='block'; return;
+  }
+  localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+  closeSetup();
+  initFirebase(cfg);
+  toast('Firebase connected! Real-time sync active.');
+}
+
+/* ── utils ── */
+function pct(cl) { return cl.steps&&cl.steps.length?Math.round(cl.steps.filter(s=>s.done).length/cl.steps.length*100):0; }
+function today() { const d=new Date(); return new Date(d.getFullYear(),d.getMonth(),d.getDate()); }
+function inRange(iso) {
+  if (timeFilter==='all') return true;
+  const d=new Date(iso); const t=today();
+  if (timeFilter==='day') return d>=t;
+  if (timeFilter==='week'){const w=new Date(t);w.setDate(t.getDate()-t.getDay());return d>=w;}
+  if (timeFilter==='month') return d>=new Date(t.getFullYear(),t.getMonth(),1);
+  if (timeFilter==='year') return d>=new Date(t.getFullYear(),0,1);
+  return true;
+}
+function statusBadge(s){
+  if(s==='Resolved') return `<span class="badge bg">${s}</span>`;
+  if(s==='In review') return `<span class="badge bb">${s}</span>`;
+  if(s==='Pending user approval') return `<span class="badge bp">${s}</span>`;
+  return `<span class="badge ba">${s}</span>`;
+}
+function typeBadge(t){const m={Bug:'br',Feature:'bb',Support:'ba',Other:''};return `<span class="badge ${m[t]||''}">${t}</span>`;}
+function priorityDot(p){const c=p==='High'?'#a32d2d':p==='Low'?'#3b6d11':'#854f0b';return `<span class="pdot" style="background:${c}"></span>${p}`;}
+
+/* ── checklist render ── */
+window.renderCL = function() {
+  const totalSteps=checklists.reduce((s,c)=>s+(c.steps?c.steps.length:0),0);
+  const donSteps=checklists.reduce((s,c)=>s+(c.steps?c.steps.filter(st=>st.done).length:0),0);
+  document.getElementById('cl-count').textContent=checklists.length;
+  document.getElementById('tasks-done').textContent=donSteps;
+  document.getElementById('tasks-sub').textContent=`of ${totalSteps} total`;
+  const grid=document.getElementById('cl-grid');
+  if(!checklists.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text3);font-size:13px">No checklists yet — click "Add checklist"</div>';document.getElementById('cl-panel-wrap').innerHTML='';return;}
+  grid.innerHTML=checklists.map(cl=>{
+    const p=pct(cl);const done=cl.steps?cl.steps.filter(s=>s.done).length:0;const total=cl.steps?cl.steps.length:0;
+    const isOpen=activeCL===cl.id;
+    return `<div class="cl-card ${isOpen?'open':''}" onclick="togglePanel('${cl.id}')">
+      <div class="cl-hover-acts">
+        <button class="icon-btn" onclick="event.stopPropagation();editCL('${cl.id}')" title="Edit"><i class="ti ti-edit"></i></button>
+        <button class="icon-btn del" onclick="event.stopPropagation();deleteCL('${cl.id}')" title="Delete"><i class="ti ti-trash"></i></button>
+      </div>
+      <div class="cl-top"><div class="cl-name">${cl.name}</div><div class="cl-pct ${p===100?'done':''}">${p}%</div></div>
+      <div class="bar-bg"><div class="bar-fill ${p===100?'done':''}" style="width:${p}%"></div></div>
+      <div class="cl-sub">${done}/${total} steps · ${isOpen?'click to close':'click to view'}</div>
+    </div>`;
+  }).join('');
+  renderPanel();
+}
+
+window.togglePanel = function(id){activeCL=activeCL===id?null:id;renderCL();}
+
+window.renderPanel = function() {
+  const wrap=document.getElementById('cl-panel-wrap');
+  if(!activeCL){wrap.innerHTML='';return;}
+  const cl=checklists.find(c=>c.id===activeCL);
+  if(!cl){wrap.innerHTML='';return;}
+  const p=pct(cl);const steps=cl.steps||[];const total=steps.length;
+  const perStep=total>0?+(100/total).toFixed(1):0;
+  const rows=steps.length?steps.map((s,i)=>`<div class="step-row">
+    <div class="step-num ${s.done?'checked':''}" onclick="toggleStep('${cl.id}',${i})" title="${s.done?'Mark undone':'Mark done'}">
+      ${s.done?'<i class="ti ti-check" style="font-size:11px"></i>':`<span>${i+1}</span>`}
+    </div>
+    <div class="step-info">
+      <div class="step-name-txt ${s.done?'done':''}">${s.name}</div>
+      <div class="step-contrib">Contributes ${perStep}% · ${s.done?'Done ✓':'Pending'}</div>
+    </div>
+    <div class="step-pct-bar"><div class="step-pct-fill" style="width:${s.done?100:0}%"></div></div>
+    <div class="step-pct-val" style="color:${s.done?'var(--green)':'var(--text3)'}">${s.done?perStep+'%':'0%'}</div>
+    <button class="step-del-btn" onclick="deleteStep('${cl.id}',${i})" title="Remove"><i class="ti ti-x"></i></button>
+  </div>`).join(''):'<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">No steps — add one below</div>';
+  wrap.innerHTML=`<div class="cl-panel">
+    <div class="cl-panel-hd">
+      <div class="cl-panel-title"><i class="ti ti-list-check"></i> ${cl.name}</div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="text-align:right"><div class="big-pct ${p===100?'done':''}">${p}%</div><div style="font-size:11px;color:var(--text3)">${steps.filter(s=>s.done).length} of ${total} done</div></div>
+        <button class="icon-btn" onclick="togglePanel('${cl.id}')" title="Close"><i class="ti ti-x"></i></button>
+      </div>
+    </div>
+    <div class="bar-bg" style="height:8px;margin-bottom:18px"><div class="bar-fill ${p===100?'done':''}" style="width:${p}%;height:8px"></div></div>
+    <div class="step-list">${rows}</div>
+    <div class="add-step-row">
+      <input type="text" id="inline-inp" placeholder="Type a new step and press Enter…" onkeydown="if(event.key==='Enter')addInlineStep('${cl.id}')"/>
+      <button class="btn" onclick="addInlineStep('${cl.id}')"><i class="ti ti-plus"></i> Add step</button>
+    </div>
+  </div>`;
+}
+
+window.toggleStep = async function(clId,idx) {
+  if(!db){toast('Connect Firebase first.');return;}
+  const cl=checklists.find(c=>c.id===clId);if(!cl)return;
+  const steps=[...(cl.steps||[])];steps[idx]={...steps[idx],done:!steps[idx].done};
+  await updateDoc(doc(db,'checklists',clId),{steps});
+}
+window.deleteStep = async function(clId,idx) {
+  if(!db){toast('Connect Firebase first.');return;}
+  const cl=checklists.find(c=>c.id===clId);if(!cl)return;
+  const steps=[...(cl.steps||[])];steps.splice(idx,1);
+  await updateDoc(doc(db,'checklists',clId),{steps});
+}
+window.addInlineStep = async function(clId) {
+  const inp=document.getElementById('inline-inp');if(!inp)return;
+  const name=inp.value.trim();if(!name)return;
+  if(!db){toast('Connect Firebase first.');return;}
+  const cl=checklists.find(c=>c.id===clId);if(!cl)return;
+  const steps=[...(cl.steps||[]),{name,done:false}];
+  inp.value='';
+  await updateDoc(doc(db,'checklists',clId),{steps});
+}
+
+/* ── CL modal ── */
+window.openAddCL=function(){
+  editCLId=null;
+  document.getElementById('cl-modal-title').textContent='New checklist';
+  document.getElementById('cl-name-inp').value='';
+  document.getElementById('step-editor').innerHTML='';
+  document.getElementById('cl-err').style.display='none';
+  addStepField();addStepField();addStepField();
+  document.getElementById('cl-modal').classList.add('open');
+}
+window.editCL=function(id){
+  const cl=checklists.find(c=>c.id===id);if(!cl)return;
+  editCLId=id;
+  document.getElementById('cl-modal-title').textContent='Edit — '+cl.name;
+  document.getElementById('cl-name-inp').value=cl.name;
+  document.getElementById('step-editor').innerHTML='';
+  document.getElementById('cl-err').style.display='none';
+  (cl.steps||[]).forEach(s=>addStepField(s.name));
+  document.getElementById('cl-modal').classList.add('open');
+}
+window.addStepField=function(val=''){
+  const ed=document.getElementById('step-editor');
+  const row=document.createElement('div');row.className='se-row';
+  row.innerHTML=`<input type="text" placeholder="Step description…" value="${val.replace(/"/g,'&quot;')}"/>
+    <button class="icon-btn del" onclick="this.parentElement.remove()" title="Remove"><i class="ti ti-x"></i></button>`;
+  ed.appendChild(row);row.querySelector('input').focus();
+}
+window.saveCL=async function(){
+  const name=document.getElementById('cl-name-inp').value.trim();
+  const err=document.getElementById('cl-err');
+  if(!name){err.textContent='Enter a checklist name.';err.style.display='block';return;}
+  if(!db){err.textContent='Connect Firebase first (top bar → Firebase setup).';err.style.display='block';return;}
+  const names=Array.from(document.querySelectorAll('#step-editor .se-row input')).map(i=>i.value.trim()).filter(Boolean);
+  const btn=document.getElementById('cl-save-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Saving…';
+  try{
+    if(editCLId){
+      const cl=checklists.find(c=>c.id===editCLId);
+      const steps=names.map(n=>{const ex=(cl.steps||[]).find(e=>e.name===n);return ex||{name:n,done:false};});
+      await updateDoc(doc(db,'checklists',editCLId),{name,steps});
+    }else{
+      const id='cl_'+Date.now();
+      await setDoc(doc(db,'checklists',id),{name,steps:names.map(n=>({name:n,done:false})),order:Date.now()});
+    }
+    closeCLModal();toast('Checklist saved — visible to everyone now!');
+  }catch(e){err.textContent='Error: '+e.message;err.style.display='block';}
+  finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Save';}
+}
+window.deleteCL=async function(id){
+  if(!confirm('Delete this checklist?'))return;
+  if(!db){toast('Connect Firebase first.');return;}
+  if(activeCL===id)activeCL=null;
+  await deleteDoc(doc(db,'checklists',id));
+}
+window.closeCLModal=function(){document.getElementById('cl-modal').classList.remove('open');}
+
+/* ── ticket table ── */
+window.setTime=function(t,btn){
+  timeFilter=t;
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  renderTicketTable();
+}
+window.setStatusFilter=function(s){
+  statusFilter=statusFilter===s?'all':s;
+  document.querySelectorAll('.mc[id^="mc-"]').forEach(m=>m.classList.remove('active-filter'));
+  const map={'all':'mc-all','Resolved':'mc-resolved','Pending':'mc-pending','Pending user approval':'mc-approval','In review':'mc-review'};
+  const el=document.getElementById(map[statusFilter]||'mc-all');if(el)el.classList.add('active-filter');
+  renderTicketTable();
+}
+window.renderTicketTable=function(){
+  const search=document.getElementById('t-search').value.toLowerCase();
+  const pri=document.getElementById('t-priority').value;
+  const typ=document.getElementById('t-type').value;
+  let list=[...tickets].filter(t=>inRange(t.isoDate));
+  if(statusFilter!=='all')list=list.filter(t=>t.status===statusFilter);
+  if(search)list=list.filter(t=>t.id.toLowerCase().includes(search)||t.title.toLowerCase().includes(search));
+  if(pri)list=list.filter(t=>t.priority===pri);
+  if(typ)list=list.filter(t=>t.type===typ);
+  const labels={'all':'All tickets','Resolved':'Resolved tickets','Pending':'Pending tickets','Pending user approval':'Pending user approval','In review':'In review tickets'};
+  document.getElementById('table-label').innerHTML=`<i class="ti ti-table"></i> ${labels[statusFilter]||'Tickets'}`;
+  document.getElementById('cnt-badge').textContent=list.length+' ticket'+(list.length!==1?'s':'');
+  const tbody=document.getElementById('t-body');
+  if(!list.length){tbody.innerHTML='<tr class="empty-row"><td colspan="7"><i class="ti ti-inbox" style="font-size:24px;display:block;margin-bottom:6px"></i>No tickets match this filter</td></tr>';return;}
+  tbody.innerHTML=list.map(t=>`<tr onclick="openTicketUrl('${t.id}')" title="Open in Zoho">
+    <td><span style="font-family:monospace;font-size:11px;color:var(--text3)">${t.id}</span></td>
+    <td><span style="font-weight:500">${t.title}</span>${t.assignee?` <span style="font-size:11px;color:var(--text3)">· ${t.assignee}</span>`:''}</td>
+    <td>${statusBadge(t.status)}</td>
+    <td>${priorityDot(t.priority)}</td>
+    <td>${typeBadge(t.type)}</td>
+    <td style="font-size:11px;color:var(--text3)">${t.displayDate}</td>
+    <td style="text-align:right;white-space:nowrap">
+      <button class="t-act-btn" onclick="event.stopPropagation();editTicketFn('${t.id}')" title="Edit"><i class="ti ti-edit"></i></button>
+      <button class="t-act-btn del" onclick="event.stopPropagation();deleteTicketFn('${t.id}')" title="Delete"><i class="ti ti-trash"></i></button>
+    </td>
+  </tr>`).join('');
+}
+window.openTicketUrl=function(id){const t=tickets.find(x=>x.id===id);if(t&&t.url)window.open(t.url,'_blank');}
+window.updateMetrics=function(){
+  document.getElementById('m-total').textContent=tickets.length;
+  document.getElementById('m-resolved').textContent=tickets.filter(t=>t.status==='Resolved').length;
+  document.getElementById('m-pending').textContent=tickets.filter(t=>t.status==='Pending').length;
+  document.getElementById('m-approval').textContent=tickets.filter(t=>t.status==='Pending user approval').length;
+  document.getElementById('m-review').textContent=tickets.filter(t=>t.status==='In review').length;
+}
+
+/* ── ticket modal ── */
+window.openAddTicket=function(){
+  editTicketId=null;
+  document.getElementById('t-modal-title').textContent='Add ticket';
+  ['f-id','f-title','f-url','f-assignee'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-id').disabled=false;
+  document.getElementById('f-status').value='Pending';
+  document.getElementById('f-priority').value='Medium';
+  document.getElementById('f-type').value='Bug';
+  document.getElementById('t-err').style.display='none';
+  document.getElementById('t-modal').classList.add('open');
+}
+window.editTicketFn=function(id){
+  const t=tickets.find(x=>x.id===id);if(!t)return;
+  editTicketId=id;
+  document.getElementById('t-modal-title').textContent='Edit — '+t.id;
+  document.getElementById('f-id').value=t.id;document.getElementById('f-id').disabled=true;
+  document.getElementById('f-title').value=t.title;
+  document.getElementById('f-url').value=t.url;
+  document.getElementById('f-status').value=t.status;
+  document.getElementById('f-priority').value=t.priority;
+  document.getElementById('f-type').value=t.type;
+  document.getElementById('f-assignee').value=t.assignee||'';
+  document.getElementById('t-err').style.display='none';
+  document.getElementById('t-modal').classList.add('open');
+}
+window.deleteTicketFn=async function(id){
+  if(!confirm('Delete ticket '+id+'?'))return;
+  if(!db){toast('Connect Firebase first.');return;}
+  await deleteDoc(doc(db,'tickets',id));
+}
+window.closeTicketModal=function(){document.getElementById('t-modal').classList.remove('open');document.getElementById('f-id').disabled=false;}
+window.saveTicket=async function(){
+  const id=document.getElementById('f-id').value.trim();
+  const title=document.getElementById('f-title').value.trim();
+  const url=document.getElementById('f-url').value.trim();
+  const err=document.getElementById('t-err');
+  if(!id||!title||!url){err.textContent='ID, title and URL are required.';err.style.display='block';return;}
+  if(!url.startsWith('http')){err.textContent='URL must start with http/https.';err.style.display='block';return;}
+  if(!db){err.textContent='Connect Firebase first (top bar → Firebase setup).';err.style.display='block';return;}
+  const now=new Date();
+  const ticket={id,title,url,status:document.getElementById('f-status').value,priority:document.getElementById('f-priority').value,type:document.getElementById('f-type').value,assignee:document.getElementById('f-assignee').value.trim(),isoDate:editTicketId?(tickets.find(t=>t.id===editTicketId)?.isoDate||now.toISOString()):now.toISOString(),displayDate:now.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'})};
+  if(!editTicketId&&tickets.find(t=>t.id===id)){err.textContent='Ticket ID already exists.';err.style.display='block';return;}
+  const btn=document.getElementById('t-save-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Saving…';
+  try{
+    await setDoc(doc(db,'tickets',id),ticket);
+    closeTicketModal();toast('Ticket saved — visible to everyone now!');
+  }catch(e){err.textContent='Error: '+e.message;err.style.display='block';}
+  finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Save ticket';}
+}
+
+/* ── copy link ── */
+window.copyLink=function(){
+  navigator.clipboard.writeText(window.location.href).then(()=>{
+    const b=event.currentTarget;b.innerHTML='<i class="ti ti-check"></i> Copied!';
+    setTimeout(()=>{b.innerHTML='<i class="ti ti-copy"></i> Copy link';},2000);
+  }).catch(()=>prompt('Copy this link:',window.location.href));
+}
+
+/* ── close overlays on outside click ── */
+['setup-modal','cl-modal','t-modal'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',e=>{if(e.target===document.getElementById(id))document.getElementById(id).classList.remove('open');});
+});
+
+/* ── boot ── */
+const cfg=loadCfg();
+if(cfg&&cfg.apiKey){
+  initFirebase(cfg);
+}else{
+  document.getElementById('setup-banner').style.display='flex';
+  setLive(false);
+  // show empty state
+  document.getElementById('cl-grid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text3);font-size:13px">Connect Firebase to load data</div>';
+  document.getElementById('t-body').innerHTML='<tr class="empty-row"><td colspan="7">Connect Firebase to load tickets</td></tr>';
+}
+document.getElementById('mc-all').classList.add('active-filter');
+</script>
+</body>
+</html>
