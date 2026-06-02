@@ -62,7 +62,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);bo
 .form-actions{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
 
 .main{max-width:1200px;margin:0 auto;padding:20px 18px}
-.sec-label覆{font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .sec-label{font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .divider{height:0.5px;background:var(--border2);margin:24px 0}
 
@@ -182,7 +181,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);bo
 </div>
 
 <div class="main">
-
   <div class="sec-label"><i class="ti ti-list-check"></i> Checklists</div>
   <div class="metric-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));max-width:340px;margin-bottom:16px">
     <div class="mc purple no-pointer">
@@ -324,8 +322,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);bo
 const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co'; 
 const SUPABASE_KEY = 'sb_publishable_2g9FideU7Sp0hXjut8MK1g_rNXQhEyH';
 
-// Initialize the core client instance ONCE
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Initialize the client connection instance using a unique variable name to prevent CDN collision
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let checklists = [];
 let tickets = [];
@@ -345,8 +343,8 @@ function toast(msg, dur=2200) {
 // Fetch live database updates
 async function loadCloudData() {
   try {
-    const { data: tkData, error: tkErr } = await supabase.from('tickets').select('*');
-    const { data: clData, error: clErr } = await supabase.from('checklists').select('*');
+    const { data: tkData, error: tkErr } = await supabaseClient.from('tickets').select('*');
+    const { data: clData, error: clErr } = await supabaseClient.from('checklists').select('*');
     
     if(tkErr) console.error("Ticket Fetch Error:", tkErr);
     if(clErr) console.error("Checklist Fetch Error:", clErr);
@@ -490,14 +488,14 @@ window.renderPanel = function() {
 window.toggleStep = async function(clId, index) {
   const cl = checklists.find(c=>c.id===clId); if(!cl) return;
   cl.steps[index].done = !cl.steps[index].done;
-  await supabase.from('checklists').upsert([cl]);
+  await supabaseClient.from('checklists').upsert([cl]);
   loadCloudData();
 }
 
 window.deleteStep = async function(clId, index) {
   const cl = checklists.find(c=>c.id===clId); if(!cl) return;
   cl.steps.splice(index, 1);
-  await supabase.from('checklists').upsert([cl]);
+  await supabaseClient.from('checklists').upsert([cl]);
   loadCloudData();
 }
 
@@ -507,7 +505,7 @@ window.addFastStep = async function(clId) {
   const cl = checklists.find(c=>c.id===clId); if(!cl) return;
   if(!cl.steps) cl.steps = [];
   cl.steps.push({ name: val, done: false });
-  await supabase.from('checklists').upsert([cl]);
+  await supabaseClient.from('checklists').upsert([cl]);
   loadCloudData();
 }
 
@@ -576,7 +574,7 @@ window.saveCL = async function() {
     order: editCLId ? (checklists.find(c=>c.id===editCLId)?.order || Date.now()) : Date.now()
   };
 
-  await supabase.from('checklists').upsert([payload]);
+  await supabaseClient.from('checklists').upsert([payload]);
   loadCloudData();
   closeCLModal();
   toast('Checklist configurations saved updates.');
@@ -587,7 +585,7 @@ function displayCLErr(m) { const e=document.getElementById('cl-err'); e.textCont
 window.deleteCL = async function(id) {
   if(!confirm('Permanently delete this tracking checklist?')) return;
   if(activeCL === id) activeCL = null;
-  await supabase.from('checklists').delete().eq('id', id);
+  await supabaseClient.from('checklists').delete().eq('id', id);
   loadCloudData();
   toast('Checklist deleted.');
 }
@@ -725,7 +723,7 @@ window.saveTicket = async function() {
     iso_date: sDate 
   };
 
-  await supabase.from('tickets').upsert([payload]);
+  await supabaseClient.from('tickets').upsert([payload]);
   loadCloudData();
   closeTicketModal();
   toast('Ticket structural log entry updated.');
@@ -735,7 +733,7 @@ function displayTErr(m) { const e=document.getElementById('t-err'); e.textConten
 
 window.deleteTicket = async function(id) {
   if(!confirm('Delete this ticket live?')) return;
-  await supabase.from('tickets').delete().eq('id', id);
+  await supabaseClient.from('tickets').delete().eq('id', id);
   loadCloudData();
   toast('Ticket trace record deleted.');
 }
@@ -766,7 +764,7 @@ window.importExcel = function(event) {
           
           if (/^(subject|title|description|issue|problem description)$/.test(cleanKey)) subject = val;
           if (/^(requester|name|user|created by|client)$/.test(cleanKey)) requester = val;
-          if (/^(status|state|ticket status)$/.test(cleanKey)) rawStatus = val;
+          if (/^(status|state|ticket status)$/.test(cleanStatus)) rawStatus = val;
           if (/^(request id|requestid|id|ticket id)$/.test(cleanKey)) reqId = val;
           if (/^(created date|date|timestamp)$/.test(cleanKey)) dateVal = row[key];
         }
@@ -809,7 +807,7 @@ window.importExcel = function(event) {
       });
 
       if(importedRows.length > 0) {
-        await supabase.from('tickets').upsert(importedRows);
+        await supabaseClient.from('tickets').upsert(importedRows);
       }
       loadCloudData();
       toast(`Successfully synchronized ${importedCount} rows to the cloud database.`);
@@ -822,7 +820,7 @@ window.importExcel = function(event) {
 }
 
 // Real-time listener configuration loop
-supabase.channel('custom-all-channel')
+supabaseClient.channel('custom-all-channel')
   .on('postgres_changes', { event: '*', filter: '*', schema: 'public' }, () => {
      loadCloudData();
   })
